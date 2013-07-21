@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 /*
-Automatically grade files for the presence of specified HTML tags/attributes.
-Uses commander.js and cheerio. Teaches command line application development
+Automatically grade files for the presence of specified HTML tags/attributes. commander.-js and cheerio. Teaches command line application development
 and basic DOM parsing.
 
 References:
@@ -38,24 +37,12 @@ var assertFileExists = function(infile) {
 };
 
 //http://stackoverflow.com/questions/17564255/getting-http-response-using-restler-in-node-js  
-var rest = require('restler');
-var getResp = function(url){
-  rest.get(url).on('complete', function(response){
-    return response;
-  });
-};
-
-var assertUrlExists = function(url) {
-    var instr = getResp(url);
-    if(!fs.existsSync(instr)) {
-        console.log("%s does not exist. Exiting.", instr);
-        process.exit(1); // http://nodejs.org/api/process.html#process_process_exit_code                                                                    
-    }
-    return instr;
-};
-
-
-
+//var rest = require('restler');
+//var getResp = function(url){
+//  rest.get(url).on('complete', function(response){
+//    return response;
+//  });
+//};
 
     var cheerioHtmlFile = function(htmlfile) {
     return cheerio.load(fs.readFileSync(htmlfile));
@@ -76,6 +63,28 @@ var checkHtmlFile = function(htmlfile, checksfile) {
     return out;
 };
 
+var rest = require('restler');
+
+var assertUrlExists = function(url) {
+    rest.get(url).on('complete', function(result,response) {
+ if ((result instanceof Error) || (response.statusCode == 404)) {
+    console.log('Error: ' + result.message);
+    process.exit(1);
+   } else {
+ fs.writeFile('./temp.txt'  , result);
+ 
+}
+});
+//checkHtmlFile('./temp.txt',checksfile);
+}
+
+
+
+
+
+
+
+
 var clone = function(fn) {
     // Workaround for commander.js issue.
     // http://stackoverflow.com/a/6772648
@@ -88,8 +97,10 @@ if(require.main == module) {
         .option('-f, --file <html_file>', 'Path to index.html', clone(assertFileExists), HTMLFILE_DEFAULT)
         .option('-u, --url <url>', 'url to index.html', clone(assertUrlExists), URL_DEFAULT)
         .parse(process.argv);
-    if (program.file) { var checkJson = checkHtmlFile(program.file, program.checks);
-    } else { var checkJson = checkHtmlFile(getResp(program.url), program.checks);
+    if (program.url) {  var checkJson = checkHtmlFile('./temp.txt', program.checks);
+    } else { 
+console.log('program.file start!');
+        var checkJson = checkHtmlFile(program.file, program.checks);
       }
     var outJson = JSON.stringify(checkJson, null, 4);
     console.log(outJson);
